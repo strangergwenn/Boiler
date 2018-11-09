@@ -45,7 +45,6 @@ public:
 		{
 			value = stoi(get(key));
 		}
-		std::cout << comment << " : " << value << std::endl;
 	}
 
 	void getOption(const std::string& key, const std::string& comment, std::string& value)
@@ -54,7 +53,6 @@ public:
 		{
 			value = get(key);
 		}
-		std::cout << comment << " : " << value << std::endl;
 	}
 
 

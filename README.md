@@ -1,14 +1,13 @@
 # Boiler
 
-Boiler is a C++ tool to upload mods to the Steam Workshop.
-
-TODO
+Boiler is a C++ tool to upload Unreal Engine 4 (or other engines) mods to the Steam Workshop.
 
 ## How to build
 
 Dependencies
 
- * VS2017 (Windows) or your usual C++ compiler (Linux)
+ * Visual Studio 2017
+ * Steam SDK (to install into 'external/sdk' such as 'external/sdk/public' is a valid path)
  * CMake
 
 Windows build
@@ -18,15 +17,9 @@ Windows build
  * Open the 'Boiler.sln' solution in build/Win64
  * Switch build to 'Release'
  * Start the build, the output will be named 'Boiler.exe' in the Release folder
- 
-Linux build
 
- * Open a terminal in the root folder
- * Run 'Configure.sh'
- * Run 'cd build/Linux''
- * Run 'make'
- * The output will be named 'Boiler'
+## How to use
 
-## Command-line parameters
+Place Boiler.exe, steam_api64.dll, steam_appid.txt at the root of your Unreal Engine editor project, next to the "Plugins" directory where mods are installed. The AppID must match the game.
 
-TODO
+Run 'Boiler --name <mod name>' and wait for the command to end. Visit your Steam Workshop page for the game you uploaded a game for and complete the setup.
