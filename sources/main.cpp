@@ -12,13 +12,14 @@ int main(int argc, char** argv)
 
 	// Get parameters
 	InputParams params(argc, argv);
-	std::string modName;
-	params.getOption("--name", "Mod name", modName);
+	std::string gameName, modName;
+	params.getOption("--game", "Mod name", gameName);
+	params.getOption("--mod", "Mod name", modName);
 
 	// Check result
-	if (modName.length() == 0)
+	if (gameName.length() == 0 || modName.length() == 0)
 	{
-		std::cout << "Usage : Boiler --name <mod name>" << std::endl;
+		std::cout << "Usage : Boiler --game <name> --mod <name>" << std::endl;
 		return EXIT_SUCCESS;
 	}
 
@@ -26,8 +27,13 @@ int main(int argc, char** argv)
 	std::string pluginsDirectory = "Plugins";
 	std::string modDirectory = pluginsDirectory + "/" + modName;
 	std::string pluginFileName = modDirectory + "/" + modName + ".uplugin";
-	std::string modContentDirectory = modDirectory + "/content";
-	std::string modPreviewImage = modDirectory + "/preview.png";
+	std::string modContentDirectory = modDirectory + "/Saved/StagedBuilds/WindowsNoEditor/" + gameName + "/Plugins/" + modName  + "/Content/Paks/WindowsNoEditor/";
+	std::string modPreviewImage = modDirectory + "/Preview.png";
+
+	// Print paths
+	std::cout << "Plugin file : " << pluginFileName << std::endl;
+	std::cout << "Content dir : " << modContentDirectory << std::endl;
+	std::cout << "Preview dir : " << modPreviewImage << std::endl;
 
 	// Read mod file
 	std::ifstream modFile(pluginFileName);

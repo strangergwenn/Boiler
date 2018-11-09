@@ -98,11 +98,11 @@ void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 	{
 		std::cout << "Invalid language." << std::endl;
 	}
-	if (!SteamUGC()->SetItemTitle(handle, m_modDescription.c_str()))
+	if (!SteamUGC()->SetItemTitle(handle, m_modName.c_str()))
 	{
 		std::cout << "Invalid mod name." << std::endl;
 	}
-	if (!SteamUGC()->SetItemDescription(handle, m_modName.c_str()))
+	if (!SteamUGC()->SetItemDescription(handle, m_modDescription.c_str()))
 	{
 		std::cout << "Invalid mod description." << std::endl;
 	}
