@@ -142,6 +142,7 @@ void Boiler::onUGCQueryComplete(SteamUGCQueryCompleted_t* result, bool failure)
 			{
 				std::cout << "Found existing mod with ID " << details.m_nPublishedFileId << std::endl;
 				uploadMod(details.m_nPublishedFileId);
+				return;
 			}
 		}
 
