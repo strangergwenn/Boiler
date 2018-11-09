@@ -5,6 +5,8 @@
 #include <thread>
 #include <chrono>
 
+#include <windows.h>
+
 
 /*----------------------------------------------------
 	Public methods
@@ -85,8 +87,17 @@ void Boiler::queryUGCList()
 
 void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 {
+	TCHAR modContentFullPath[MAX_PATH];
+	TCHAR modPreviewFullPath[MAX_PATH];
+	GetFullPathName(m_modContentPath.c_str(), MAX_PATH, modContentFullPath, NULL);
+	GetFullPathName(m_modPreviewPicture.c_str(), MAX_PATH, modPreviewFullPath, NULL);
+
 	// Set item properties
 	UGCUpdateHandle_t handle = SteamUGC()->StartItemUpdate(m_appId, publishedFileId);
+	if (!SteamUGC()->SetItemUpdateLanguage(handle, "english"))
+	{
+		std::cout << "Invalid language." << std::endl;
+	}
 	if (!SteamUGC()->SetItemTitle(handle, m_modDescription.c_str()))
 	{
 		std::cout << "Invalid mod name." << std::endl;
@@ -95,11 +106,11 @@ void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 	{
 		std::cout << "Invalid mod description." << std::endl;
 	}
-	if (!SteamUGC()->SetItemContent(handle, m_modContentPath.c_str()))
+	if (!SteamUGC()->SetItemContent(handle, modContentFullPath))
 	{
 		std::cout << "Invalid mod content folder." << std::endl;
 	}
-	if (!SteamUGC()->SetItemPreview(handle, m_modPreviewPicture.c_str()))
+	if (!SteamUGC()->SetItemPreview(handle, modPreviewFullPath))
 	{
 		std::cout << "Invalid mod preview picture." << std::endl;
 	}
