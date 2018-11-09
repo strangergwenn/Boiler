@@ -38,7 +38,7 @@ set (CLIENT_PROJECT_FILES
 
 # Create executable
 add_executable(Boiler ${CLIENT_PROJECT_FILES})
-set_property(TARGET Boiler PROPERTY CXX_STANDARD 11)
+set_property(TARGET Boiler PROPERTY CXX_STANDARD 17)
 set_property(TARGET Boiler PROPERTY CXX_STANDARD_REQUIRED ON)
 set_target_properties(Boiler PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -51,6 +51,8 @@ set_target_properties(${TARGET} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOW
 set_target_properties(${TARGET} PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
 
 # Additional definitions
+set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	
 # Add includes

@@ -1,11 +1,10 @@
 #include "boiler.h"
 
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <thread>
 #include <chrono>
-
-#include <windows.h>
 
 
 /*----------------------------------------------------
@@ -87,11 +86,6 @@ void Boiler::queryUGCList()
 
 void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 {
-	TCHAR modContentFullPath[MAX_PATH];
-	TCHAR modPreviewFullPath[MAX_PATH];
-	GetFullPathName(m_modContentPath.c_str(), MAX_PATH, modContentFullPath, NULL);
-	GetFullPathName(m_modPreviewPicture.c_str(), MAX_PATH, modPreviewFullPath, NULL);
-
 	// Set item properties
 	UGCUpdateHandle_t handle = SteamUGC()->StartItemUpdate(m_appId, publishedFileId);
 	if (!SteamUGC()->SetItemUpdateLanguage(handle, "english"))
@@ -106,11 +100,11 @@ void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 	{
 		std::cout << "Invalid mod description." << std::endl;
 	}
-	if (!SteamUGC()->SetItemContent(handle, modContentFullPath))
+	if (!SteamUGC()->SetItemContent(handle, std::filesystem::absolute(m_modContentPath).string().c_str()))
 	{
 		std::cout << "Invalid mod content folder." << std::endl;
 	}
-	if (!SteamUGC()->SetItemPreview(handle, modPreviewFullPath))
+	if (!SteamUGC()->SetItemPreview(handle, std::filesystem::absolute(m_modPreviewPicture).string().c_str()))
 	{
 		std::cout << "Invalid mod preview picture." << std::endl;
 	}

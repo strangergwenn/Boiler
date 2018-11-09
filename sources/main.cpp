@@ -2,10 +2,12 @@
 #include "boiler/boiler.h"
 
 #include "json/json.h"
-#include <fstream>
 
+#include <filesystem>
 #include <string>
 #include <iostream>
+#include <fstream>
+
 
 int main(int argc, char** argv)
 {
@@ -27,12 +29,23 @@ int main(int argc, char** argv)
 	std::string pluginsDirectory = "Plugins";
 	std::string modDirectory = pluginsDirectory + "/" + modName;
 	std::string pluginFileName = modDirectory + "/" + modName + ".uplugin";
-	std::string modContentDirectory = modDirectory + "/Saved/StagedBuilds/WindowsNoEditor/" + gameName + "/Plugins/" + modName  + "/Content/Paks/WindowsNoEditor/";
 	std::string modPreviewImage = modDirectory + "/Preview.png";
+	std::string modContentDirectoryWindows = modDirectory + "/Saved/StagedBuilds/WindowsNoEditor/" + gameName + "/Plugins/" + modName + "/Content/Paks/WindowsNoEditor/";
+	std::string modContentDirectoryLinux = modDirectory + "/Saved/StagedBuilds/LinuxNoEditor/" + gameName + "/Plugins/" + modName + "/Content/Paks/LinuxNoEditor/";
+
+	// Copy Windows & Linux folders to a unified folder
+	std::string modContentBuildDirectory = modDirectory + "/Build";
+	if (std::filesystem::exists(modContentBuildDirectory))
+	{
+		std::filesystem::remove_all(modContentBuildDirectory);
+	}
+	std::filesystem::create_directory(modContentBuildDirectory);
+	std::filesystem::copy(modContentDirectoryWindows, modContentBuildDirectory + "/Windows");
+	std::filesystem::copy(modContentDirectoryLinux, modContentBuildDirectory + "/Linux");
 
 	// Print paths
 	std::cout << "Plugin file : " << pluginFileName << std::endl;
-	std::cout << "Content dir : " << modContentDirectory << std::endl;
+	std::cout << "Content dir : " << modContentBuildDirectory << std::endl;
 	std::cout << "Preview dir : " << modPreviewImage << std::endl;
 
 	// Read mod file
@@ -59,7 +72,7 @@ int main(int argc, char** argv)
 		tool.upload(
 			plugin["FriendlyName"].asString(),
 			plugin["Description"].asString(),
-			modContentDirectory,
+			modContentBuildDirectory,
 			modPreviewImage);
 
 		tool.shutdown();
