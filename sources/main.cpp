@@ -186,7 +186,7 @@ std::string getExecutableExtension()
 #ifdef _WIN32
 	return ".exe";
 #else
-	return gameName + ".sh";
+	return ".sh";
 #endif
 }
 
@@ -226,7 +226,7 @@ std::string detectUnrealGame()
 		{
 			for (std::string folder : folders)
 			{
-				if (executable._Starts_with(folder))
+				if (executable.rfind(folder, 0) == 0)
 				{
 					std::cout << "Found game executable " << executable << std::endl;
 					return folder;

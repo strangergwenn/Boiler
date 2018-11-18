@@ -3,7 +3,12 @@ project (Boiler)
 
 # Setup Steam SDK path
 set(STEAM_SDK_PATH "${CMAKE_SOURCE_DIR}/external/sdk")
-set(STEAM_LIBRARY_PATH "${STEAM_SDK_PATH}/redistributable_bin/win64")
+if(UNIX)
+	set(STEAM_LIBRARY_PATH "${STEAM_SDK_PATH}/redistributable_bin/linux64")
+else()
+	set(STEAM_LIBRARY_PATH "${STEAM_SDK_PATH}/redistributable_bin/win64")
+endif()
+
 
 # JSON files
 set (JSON_FILES
@@ -48,6 +53,10 @@ macro (setup_executable TARGET FILES)
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
+if(UNIX)
+	target_link_libraries(${TARGET} PUBLIC "stdc++fs")
+endif()
 	
 	# Add includes
 	target_include_directories(${TARGET} PUBLIC "sources")
@@ -55,14 +64,25 @@ macro (setup_executable TARGET FILES)
 	target_include_directories(${TARGET} PUBLIC "${STEAM_SDK_PATH}/public")
 
 	# Add Steam library link
+if(UNIX)
+	target_link_libraries(${TARGET} PUBLIC "${STEAM_LIBRARY_PATH}/libsteam_api.so")
+else()
 	target_link_libraries(${TARGET} PUBLIC "${STEAM_LIBRARY_PATH}/steam_api64.lib")
+endif()
 
 	# Add Steam DLL copy
+if(UNIX)
+		add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"${STEAM_LIBRARY_PATH}/libsteam_api.so"
+		"$<TARGET_FILE_DIR:Boiler>")
+else()
 	add_custom_command(TARGET ${TARGET} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		"${STEAM_LIBRARY_PATH}/steam_api64.dll"
 		"$<TARGET_FILE_DIR:Boiler>")
-	
+endif()
+
 endmacro()
 
 # Add executables
