@@ -240,7 +240,7 @@ std::string detectUnrealGame()
 
 void launchGame(const std::string& gameName, InputParams& params)
 {
-	std::string commandLine = std::filesystem::current_path().string() + "/" + gameName + getExecutableExtension() + " " + params.getRaw() + "&";
+	std::string commandLine = std::filesystem::current_path().string() + "/" + gameName + getExecutableExtension() + " " + params.getRaw();
 	std::cout << commandLine << std::endl;
 
 #ifdef _WIN32
