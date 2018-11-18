@@ -26,22 +26,50 @@ int main(int argc, char** argv)
 	}
 
 	// Build paths
-	std::string pluginsDirectory = "Plugins";
-	std::string modDirectory = pluginsDirectory + "/" + modName;
+	std::string ModsDirectory = "Mods";
+	std::string modDirectory = ModsDirectory + "/" + modName;
 	std::string pluginFileName = modDirectory + "/" + modName + ".uplugin";
 	std::string modPreviewImage = modDirectory + "/Preview.png";
-	std::string modContentDirectoryWindows = modDirectory + "/Saved/StagedBuilds/WindowsNoEditor/" + gameName + "/Plugins/" + modName + "/Content/Paks/WindowsNoEditor/";
-	std::string modContentDirectoryLinux = modDirectory + "/Saved/StagedBuilds/LinuxNoEditor/" + gameName + "/Plugins/" + modName + "/Content/Paks/LinuxNoEditor/";
+	std::string modContentDirectoryWindows = modDirectory + "/Saved/StagedBuilds/WindowsNoEditor/" + gameName + "/Mods/" + modName + "/Content/Paks/WindowsNoEditor/";
+	std::string modContentDirectoryLinux = modDirectory + "/Saved/StagedBuilds/LinuxNoEditor/" + gameName + "/Mods/" + modName + "/Content/Paks/LinuxNoEditor/";
+	std::string modContentDirectoryMac = modDirectory + "/Saved/StagedBuilds/MacNoEditor/" + gameName + "/Mods/" + modName + "/Content/Paks/MacNoEditor/";
+	std::string modContentBuildDirectory = modDirectory + "/Build";
 
 	// Copy Windows & Linux folders to a unified folder
-	std::string modContentBuildDirectory = modDirectory + "/Build";
-	if (std::filesystem::exists(modContentBuildDirectory))
+	try
 	{
-		std::filesystem::remove_all(modContentBuildDirectory);
+		// Create build folder
+		if (std::filesystem::exists(modContentBuildDirectory))
+		{
+			std::filesystem::remove_all(modContentBuildDirectory);
+		}
+		std::filesystem::create_directory(modContentBuildDirectory);
+
+		// Copy Windows
+		std::filesystem::copy(modContentDirectoryWindows, modContentBuildDirectory + "/Windows");
+
+		// Copy Linux
+		if (std::filesystem::exists(modContentDirectoryLinux))
+		{
+			std::filesystem::copy(modContentDirectoryLinux, modContentBuildDirectory + "/Linux");
+		}
+
+		// Copy Mac
+		if (std::filesystem::exists(modContentDirectoryMac))
+		{
+			std::filesystem::copy(modContentDirectoryMac, modContentBuildDirectory + "/Mac");
+		}
 	}
-	std::filesystem::create_directory(modContentBuildDirectory);
-	std::filesystem::copy(modContentDirectoryWindows, modContentBuildDirectory + "/Windows");
-	std::filesystem::copy(modContentDirectoryLinux, modContentBuildDirectory + "/Linux");
+	catch (const std::filesystem::filesystem_error & ex)
+	{
+		std::cout << ex.what() << std::endl;
+		std::cout << "Required mod files could not be found !" << std::endl;
+		std::cout << " - Make sure " << pluginFileName << " exists." << std::endl;
+		std::cout << " - Make sure " << modPreviewImage << " exists." << std::endl;
+		std::cout << " - Make sure " << modContentDirectoryWindows << " exists." << std::endl;
+
+		return EXIT_SUCCESS;
+	}
 
 	// Print paths
 	std::cout << "Plugin file : " << pluginFileName << std::endl;
@@ -56,7 +84,7 @@ int main(int argc, char** argv)
 	// Check result
 	if (modFileContent.str().length() == 0)
 	{
-		std::cout << "Plugin file " << pluginFileName.c_str() << " could not be found." << std::endl;
+		std::cout << "Plugin file " << pluginFileName << " could not be found." << std::endl;
 		return EXIT_SUCCESS;
 	}
 
