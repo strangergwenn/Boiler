@@ -42,26 +42,76 @@ void Boiler::shutdown()
 	SteamAPI_Shutdown();
 }
 
-void Boiler::upload(std::string& modName, std::string& modDescription, std::string& modContentPath, std::string& modPreviewPicture)
+std::vector<std::pair<std::string, uint32>> Boiler::discoverMods()
+{
+	std::vector<std::pair<std::string, uint32>> results;
+
+	// Build UGC query
+	queryUGCList();
+	wait();
+	std::cout << "Mod list loaded" << std::endl;
+
+	// Search UGC list for installed mods
+	for (SteamUGCDetails_t details : m_currentUGCList)
+	{
+		uint32_t modState = SteamUGC()->GetItemState(details.m_nPublishedFileId);
+
+		if (modState & k_EItemStateInstalled)
+		{
+			uint64 sizeOnDisk;
+			char folder[4096];
+			uint32 timeStamp;
+
+			if (SteamUGC()->GetItemInstallInfo(details.m_nPublishedFileId, &sizeOnDisk, folder, 4096, &timeStamp))
+			{
+				std::cout << "Found installed mod " << details.m_rgchTitle << " at " << folder << std::endl;
+				results.push_back(std::make_pair(folder, timeStamp));
+			}
+		}
+	}
+
+	return results;
+}
+
+void Boiler::uploadMod(const std::string& modName, const std::string& modDescription, const std::string& modContentPath, const std::string& modPreviewPicture)
 {
 	// Copy parameters
-	m_running = true;
-	m_currentUGCListIndex = 0;
 	m_modContentPath = modContentPath;
 	m_modName = modName;
 	m_modDescription = modDescription;
 	m_modPreviewPicture = modPreviewPicture;
 
 	// Build UGC query
-	m_currentUGCListCount = 0;
 	queryUGCList();
+	wait();
+	std::cout << "Mod list loaded" << std::endl;
 
-	// Wait for end of execution
-	while (m_running)
+	// Look at the UGC results to search for that mod
+	bool foundMod = false;
+	for (SteamUGCDetails_t details : m_currentUGCList)
 	{
-		SteamAPI_RunCallbacks();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		if (std::string(details.m_rgchTitle) == m_modName)
+		{
+			foundMod = true;
+			m_currentModId = details.m_nPublishedFileId;
+			std::cout << "Found existing mod with ID " << details.m_nPublishedFileId << std::endl;
+		}
 	}
+
+	// Create mod if not found
+	if (!foundMod)
+	{
+		std::cout << "Creating new mod" << std::endl;
+
+		createMod();
+		wait();
+		std::cout << "Mod created" << std::endl;
+	}
+
+	// Update mod
+	updateMod(m_currentModId);
+	wait();
+	std::cout << "Upload done" << std::endl;
 }
 
 
@@ -69,8 +119,16 @@ void Boiler::upload(std::string& modName, std::string& modDescription, std::stri
 	Internal
 ----------------------------------------------------*/
 
-void Boiler::queryUGCList()
+void Boiler::queryUGCList(bool clearPreviousResults)
 {
+	m_running = true;
+
+	// Update the UGC list state
+	if (clearPreviousResults)
+	{
+		m_currentUGCList.clear();
+		m_currentUGCListIndex = 0;
+	}
 	m_currentUGCListIndex++;
 
 	// Build parameters
@@ -84,8 +142,19 @@ void Boiler::queryUGCList()
 	m_ugcQueryHandler.Set(res, this, &Boiler::onUGCQueryComplete);
 }
 
-void Boiler::uploadMod(PublishedFileId_t publishedFileId)
+void Boiler::createMod()
 {
+	m_running = true;
+
+	// Submit creation
+	SteamAPICall_t res = SteamUGC()->CreateItem(m_appId, EWorkshopFileType::k_EWorkshopFileTypeCommunity);
+	m_createResultHandler.Set(res, this, &Boiler::onCreated);
+}
+
+void Boiler::updateMod(PublishedFileId_t publishedFileId)
+{
+	m_running = true;
+
 	// Set item properties
 	UGCUpdateHandle_t handle = SteamUGC()->StartItemUpdate(m_appId, publishedFileId);
 	if (!SteamUGC()->SetItemUpdateLanguage(handle, "english"))
@@ -114,6 +183,15 @@ void Boiler::uploadMod(PublishedFileId_t publishedFileId)
 	m_submitResultHandler.Set(res, this, &Boiler::onSubmitted);
 }
 
+void Boiler::wait()
+{
+	while (m_running)
+	{
+		SteamAPI_RunCallbacks();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+}
+
 
 /*----------------------------------------------------
 	Steam callbacks
@@ -123,35 +201,29 @@ void Boiler::onUGCQueryComplete(SteamUGCQueryCompleted_t* result, bool failure)
 {
 	if (checkResult(result->m_eResult, false, failure))
 	{
-		m_currentUGCListCount += result->m_unNumResultsReturned;
-		std::cout << "Got " << m_currentUGCListCount << " published mods out of " << result->m_unTotalMatchingResults << std::endl;
-
 		// Analyze details to look for a matching mod file to update
 		SteamUGCDetails_t details;
 		for (uint32_t i = 0; i < result->m_unNumResultsReturned; i++)
 		{
 			SteamUGC()->GetQueryUGCResult(result->m_handle, i, &details);
-
-			if (std::string(details.m_rgchTitle) == m_modName)
-			{
-				std::cout << "Found existing mod with ID " << details.m_nPublishedFileId << std::endl;
-				uploadMod(details.m_nPublishedFileId);
-				return;
-			}
+			m_currentUGCList.push_back(details);
 		}
+
+		std::cout << "Got " << m_currentUGCList.size() << " published mods out of " << result->m_unTotalMatchingResults << std::endl;
 
 		// If not found and more results left, request the next page
-		if (m_currentUGCListCount < result->m_unTotalMatchingResults)
+		if (m_currentUGCList.size() < result->m_unTotalMatchingResults)
 		{
-			queryUGCList();
+			queryUGCList(false);
 		}
-
-		// If we're done, create the file
 		else
 		{
-			SteamAPICall_t res = SteamUGC()->CreateItem(m_appId, EWorkshopFileType::k_EWorkshopFileTypeCommunity);
-			m_createResultHandler.Set(res, this, &Boiler::onCreated);
+			m_running = false;
 		}
+	}
+	else
+	{
+		m_running = false;
 	}
 }
 
@@ -160,9 +232,10 @@ void Boiler::onCreated(CreateItemResult_t* result, bool failure)
 	if (checkResult(result->m_eResult, result->m_bUserNeedsToAcceptWorkshopLegalAgreement, failure))
 	{
 		std::cout << "Successfully created mod with ID " << result->m_nPublishedFileId << std::endl;
-
-		uploadMod(result->m_nPublishedFileId);
+		m_currentModId = result->m_nPublishedFileId;
 	}
+
+	m_running = false;
 }
 
 void Boiler::onSubmitted(SubmitItemUpdateResult_t* result, bool failure)

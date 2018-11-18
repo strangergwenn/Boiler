@@ -39,7 +39,7 @@ public:
 		}
 	}
 
-	void getOption(const std::string& key, const std::string& comment, int& value)
+	void getOption(const std::string& key, const std::string& comment, int& value) const
 	{
 		if (isSet(key))
 		{
@@ -47,12 +47,24 @@ public:
 		}
 	}
 
-	void getOption(const std::string& key, const std::string& comment, std::string& value)
+	void getOption(const std::string& key, const std::string& comment, std::string& value) const
 	{
 		if (isSet(key))
 		{
 			value = get(key);
 		}
+	}
+
+	std::string getRaw() const
+	{
+		std::string result;
+
+		for (std::string param : mParams)
+		{
+			result.append(param);
+		}
+
+		return result;
 	}
 
 

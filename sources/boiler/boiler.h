@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <string>
+#include <vector>
 #include <atomic>
 
 #include "steam/steam_api.h"
@@ -28,13 +29,19 @@ public:
 	void shutdown();
 
 	/**
-	* @brief Initialize the Steamworks SDK
+	 * @brief Find all currently installed mods
+	 * @return List of mod folders
+	*/
+	std::vector<std::pair<std::string, uint32>> discoverMods();
+
+	/**
+	* @brief Update mod contents
 	* @param modName           Name of the mod file to load
 	* @param modDescription    Description to send to Steamworks
 	* @param modPath           Folder to use as mod content for uploading
 	* @param modPreviewPicture Preview image as a PNG file
 	*/
-	void upload(std::string& modName, std::string& modDescription, std::string& modContentPath, std::string& modPreviewPicture);
+	void uploadMod(const std::string& modName, const std::string& modDescription, const std::string& modContentPath, const std::string& modPreviewPicture);
 
 
 private:
@@ -44,10 +51,16 @@ private:
 	----------------------------------------------------*/
 
 	/** @brief Get up to 50 published mods from this Steam user */
-	void queryUGCList();
+	void queryUGCList(bool clearPreviousResults = true);
+
+	/**Create a new mod file */
+	void createMod();
 
 	/** @brief Upload a submitted mod */
-	void uploadMod(PublishedFileId_t publishedFileId);
+	void updateMod(PublishedFileId_t publishedFileId);
+
+	/** Wait for a query to end */
+	void wait();
 
 
 private:
@@ -79,7 +92,8 @@ private:
 	AppId_t                                       m_appId;
 	std::atomic<bool>                             m_running;
 	uint32_t                                      m_currentUGCListIndex;
-	uint32_t                                      m_currentUGCListCount;
+	std::vector<SteamUGCDetails_t>                m_currentUGCList;
+	PublishedFileId_t                             m_currentModId;
 
 	// Mod settings
 	std::string                                   m_modContentPath;
