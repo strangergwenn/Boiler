@@ -8,6 +8,14 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef _WIN32
+#  include <windows.h>
+#endif
+
+
+/*----------------------------------------------------
+	Modding support tools
+----------------------------------------------------*/
 
 void uploadMod(Boiler* tool, const std::string& gameName, const std::string& modName)
 {
@@ -192,7 +200,9 @@ std::string detectUnrealGame()
 	for (auto& p : std::filesystem::directory_iterator("./"))
 	{
 		std::string fileName = p.path().filename().string();
-		if (p.is_regular_file() && fileName.find(getExecutableExtension()) != std::string::npos)
+		if (p.is_regular_file()
+			&& fileName.find("Launcher") == std::string::npos
+			&& fileName.find(getExecutableExtension()) != std::string::npos)
 		{
 			executables.push_back(fileName);
 		}
@@ -230,11 +240,20 @@ std::string detectUnrealGame()
 
 void launchGame(const std::string& gameName, InputParams& params)
 {
-	std::string commandLine = gameName + getExecutableExtension() + " " + params.getRaw();
+	std::string commandLine = std::filesystem::current_path().string() + "/" + gameName + getExecutableExtension() + " " + params.getRaw() + "&";
 	std::cout << commandLine << std::endl;
+
+#ifdef _WIN32
+	WinExec(commandLine.c_str(), SW_HIDE);
+#else
 	system(commandLine.c_str());
+#endif
 }
 
+
+/*----------------------------------------------------
+	Main
+----------------------------------------------------*/
 
 int main(int argc, char** argv)
 {
@@ -287,3 +306,10 @@ int main(int argc, char** argv)
 	// Exit
 	return EXIT_SUCCESS;
 }
+
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	main(__argc, __argv);
+}
+#endif
