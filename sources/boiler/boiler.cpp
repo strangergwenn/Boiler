@@ -47,7 +47,7 @@ std::vector<std::pair<std::string, uint32>> Boiler::discoverMods()
 	std::vector<std::pair<std::string, uint32>> results;
 
 	// Build UGC query
-	queryUGCList();
+	queryUGCList(false, true);
 	wait();
 	std::cout << "Mod list loaded" << std::endl;
 
@@ -82,7 +82,7 @@ void Boiler::uploadMod(const std::string& modName, const std::string& modDescrip
 	m_modPreviewPicture = modPreviewPicture;
 
 	// Build UGC query
-	queryUGCList();
+	queryUGCList(true, true);
 	wait();
 	std::cout << "Mod list loaded" << std::endl;
 
@@ -119,9 +119,10 @@ void Boiler::uploadMod(const std::string& modName, const std::string& modDescrip
 	Internal
 ----------------------------------------------------*/
 
-void Boiler::queryUGCList(bool clearPreviousResults)
+void Boiler::queryUGCList(bool published, bool clearPreviousResults)
 {
 	m_running = true;
+	m_onlyPublishedUGC = published;
 
 	// Update the UGC list state
 	if (clearPreviousResults)
@@ -132,7 +133,7 @@ void Boiler::queryUGCList(bool clearPreviousResults)
 	m_currentUGCListIndex++;
 
 	// Build parameters
-	EUserUGCList modType = k_EUserUGCList_Subscribed;
+	EUserUGCList modType = published ? k_EUserUGCList_Published : k_EUserUGCList_Subscribed;
 	EUGCMatchingUGCType matchingType = k_EUGCMatchingUGCType_Items;
 	AccountID_t accountId = SteamUser()->GetSteamID().GetAccountID();
 
@@ -214,7 +215,7 @@ void Boiler::onUGCQueryComplete(SteamUGCQueryCompleted_t* result, bool failure)
 		// If not found and more results left, request the next page
 		if (m_currentUGCList.size() < result->m_unTotalMatchingResults)
 		{
-			queryUGCList(false);
+			queryUGCList(m_onlyPublishedUGC, false);
 		}
 		else
 		{

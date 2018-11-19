@@ -50,8 +50,12 @@ private:
 		Internal
 	----------------------------------------------------*/
 
-	/** @brief Get up to 50 published mods from this Steam user */
-	void queryUGCList(bool clearPreviousResults = true);
+	/**
+	 * @brief Get up to 50 published mods from this Steam user
+	 * @param published        Only mods published by this user
+	 * @param clearPreviousResults Start a new query
+	 */
+	void queryUGCList(bool published, bool clearPreviousResults);
 
 	/**Create a new mod file */
 	void createMod();
@@ -94,6 +98,7 @@ private:
 	uint32_t                                      m_currentUGCListIndex;
 	std::vector<SteamUGCDetails_t>                m_currentUGCList;
 	PublishedFileId_t                             m_currentModId;
+	bool                                          m_onlyPublishedUGC;
 
 	// Mod settings
 	std::string                                   m_modContentPath;
