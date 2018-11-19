@@ -132,7 +132,7 @@ void Boiler::queryUGCList(bool clearPreviousResults)
 	m_currentUGCListIndex++;
 
 	// Build parameters
-	EUserUGCList modType = k_EUserUGCList_Published;
+	EUserUGCList modType = k_EUserUGCList_Subscribed;
 	EUGCMatchingUGCType matchingType = k_EUGCMatchingUGCType_Items;
 	AccountID_t accountId = SteamUser()->GetSteamID().GetAccountID();
 
