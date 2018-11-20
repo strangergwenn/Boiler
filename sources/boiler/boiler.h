@@ -6,6 +6,15 @@
 #include "steam/steam_api.h"
 #include "steam/isteamugc.h"
 
+
+struct ModInfo
+{
+	std::string       path;
+	uint32_t          timestamp;
+	PublishedFileId_t identifier;
+};
+
+
 class Boiler
 {
 
@@ -32,7 +41,7 @@ public:
 	 * @brief Find all currently installed mods
 	 * @return List of mod folders
 	*/
-	std::vector<std::pair<std::string, uint32>> discoverMods();
+	std::vector<ModInfo> discoverMods();
 
 	/**
 	* @brief Update mod contents

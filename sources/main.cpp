@@ -14,6 +14,51 @@
 
 
 /*----------------------------------------------------
+	Helpers
+----------------------------------------------------*/
+
+uint32_t readUintFromFile(const std::string& name)
+{
+	uint32_t uint;
+
+	std::ifstream file;
+	file.open(name);
+	file >> uint;
+	file.close();
+
+	return uint;
+}
+
+void writeUintToFile(const std::string& name, uint32_t uint)
+{
+	std::ofstream file;
+	file.open(name);
+	file << uint;
+	file.close();
+}
+
+uint64_t readIdentifierFromFile(const std::string& name)
+{
+	uint64_t uint;
+
+	std::ifstream file;
+	file.open(name);
+	file >> uint;
+	file.close();
+
+	return uint;
+}
+
+void writeIdentifierToFile(const std::string& name, uint64_t uint)
+{
+	std::ofstream file;
+	file.open(name);
+	file << uint;
+	file.close();
+}
+
+
+/*----------------------------------------------------
 	Modding support tools
 ----------------------------------------------------*/
 
@@ -105,11 +150,12 @@ void uploadMod(Boiler* tool, const std::string& gameName, const std::string& mod
 		modPreviewImage);
 }
 
-void installMod(const std::string& modName, const std::string& sourcePath, const std::string& destinationPath, uint32_t modTimestamp)
+void installMod(const std::string& modName, const std::string& sourcePath, const std::string& destinationPath, uint64_t modIdentifier, uint32_t modTimestamp)
 {
 	// Setup paths
 	std::string sourceDir = sourcePath + "/" + modName;
 	std::string destinationDir = destinationPath + "/" + modName;
+	std::string identifierFile = destinationDir + "/identifier";
 	std::string timestampFile = destinationDir + "/time";
 
 	try
@@ -117,12 +163,7 @@ void installMod(const std::string& modName, const std::string& sourcePath, const
 		// It's an update
 		if (std::filesystem::exists(timestampFile))
 		{
-			uint32_t previousTimestamp;
-
-			std::ifstream timeFile;
-			timeFile.open(timestampFile);
-			timeFile >> previousTimestamp;
-			timeFile.close();
+			uint32_t previousTimestamp = readUintFromFile(timestampFile);
 
 			if (modTimestamp > previousTimestamp)
 			{
@@ -151,10 +192,8 @@ void installMod(const std::string& modName, const std::string& sourcePath, const
 			}
 			std::filesystem::copy(sourceDir, destinationDir, std::filesystem::copy_options::recursive);
 
-			std::ofstream timeFile;
-			timeFile.open(timestampFile);
-			timeFile << modTimestamp;
-			timeFile.close();
+			writeIdentifierToFile(identifierFile, modIdentifier);
+			writeUintToFile(timestampFile, modTimestamp);
 		}
 	}
 	catch (const std::filesystem::filesystem_error & ex)
@@ -169,14 +208,41 @@ void installMods(Boiler* tool, const std::string& gameName)
 	std::filesystem::create_directory(modsDirectory);
 
 	// Assume a "ModName" folder in the source mod directory, copy it as-is in /Mods/
-	for (std::pair<std::string, uint32> mod : tool->discoverMods())
+	std::vector<ModInfo> modList = tool->discoverMods();
+	for (ModInfo mod : modList)
 	{
-		for (auto& p : std::filesystem::directory_iterator(mod.first))
+		for (auto& p : std::filesystem::directory_iterator(mod.path))
 		{
 			if (p.is_directory())
 			{
-				installMod(p.path().filename().string(), mod.first, modsDirectory, mod.second);
+				installMod(p.path().filename().string(), mod.path, modsDirectory, mod.identifier, mod.timestamp);
 			}
+		}
+	}
+
+	// Look for unsubscribed mods and remove them
+	for (auto& p : std::filesystem::directory_iterator(modsDirectory))
+	{
+		std::string modPath = modsDirectory + "/" + p.path().filename().string();
+		std::string identifierFile = modPath + "/identifier";
+		uint64_t identifier = readIdentifierFromFile(identifierFile);
+
+		// Confirm if the mod is still subscribed to
+		bool removeMod = true;
+		for (ModInfo mod : modList)
+		{
+			if (identifier == mod.identifier)
+			{
+				removeMod = false;
+				break;
+			}
+		}
+
+		// Remove it
+		if (removeMod)
+		{
+			std::cout << "Removing " << modPath << " (item " << identifier << " not subscribed to)" << std::endl;
+			std::filesystem::remove_all(modPath);
 		}
 	}
 }

@@ -42,9 +42,9 @@ void Boiler::shutdown()
 	SteamAPI_Shutdown();
 }
 
-std::vector<std::pair<std::string, uint32>> Boiler::discoverMods()
+std::vector<ModInfo> Boiler::discoverMods()
 {
-	std::vector<std::pair<std::string, uint32>> results;
+	std::vector<ModInfo> results;
 
 	// Build UGC query
 	queryUGCList(false, true);
@@ -60,12 +60,17 @@ std::vector<std::pair<std::string, uint32>> Boiler::discoverMods()
 		{
 			uint64 sizeOnDisk;
 			char folder[4096];
-			uint32 timeStamp;
+			uint32 timestamp;
 
-			if (SteamUGC()->GetItemInstallInfo(details.m_nPublishedFileId, &sizeOnDisk, folder, 4096, &timeStamp))
+			if (SteamUGC()->GetItemInstallInfo(details.m_nPublishedFileId, &sizeOnDisk, folder, 4096, &timestamp))
 			{
+				ModInfo info;
+				info.path = folder;
+				info.timestamp = timestamp;
+				info.identifier = details.m_nPublishedFileId;
+				results.push_back(info);
+
 				std::cout << "Found installed mod " << details.m_rgchTitle << " at " << folder << std::endl;
-				results.push_back(std::make_pair(folder, timeStamp));
 			}
 		}
 	}
