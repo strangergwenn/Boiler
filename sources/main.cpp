@@ -338,35 +338,41 @@ int main(int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	// Main tool run
+	// Run the Steamworks tools
 	Boiler tool;
+	bool startGame = true;
 	if (tool.initialize())
 	{
 		// Upload mod
 		if (gameName.length() && modName.length())
 		{
 			uploadMod(&tool, gameName, modName);
+			startGame = false;
 		}
 
-		// Process local mods and launch the game
+		// Install mods
 		else
 		{
-			// Get local UE4 game
-			gameName = detectUnrealGame();
-			if (!gameName.length())
-			{
-				std::cout << "Couldn't detect game executable. Run the tool with --help." << std::endl;
-				return EXIT_SUCCESS;
-			}
-
-			// Install mods
 			installMods(&tool, gameName);
-
-			// Run game
-			launchGame(gameName, params);
 		}
 
 		tool.shutdown();
+	}
+
+	// Start the game
+	if (startGame)
+	{
+		std::string localGameName = detectUnrealGame();
+		
+		// Get local UE4 game
+		if (localGameName.length())
+		{
+			launchGame(localGameName, params);
+		}
+		else
+		{
+			std::cout << "Couldn't detect game executable. Run the tool with --help." << std::endl;
+		}
 	}
 
 	// Exit
