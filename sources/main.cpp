@@ -338,9 +338,11 @@ int main(int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
+	bool startGame = true;
+	std::string localGameName = detectUnrealGame();
+
 	// Run the Steamworks tools
 	Boiler tool;
-	bool startGame = true;
 	if (tool.initialize())
 	{
 		// Upload mod
@@ -353,7 +355,7 @@ int main(int argc, char** argv)
 		// Install mods
 		else
 		{
-			installMods(&tool, gameName);
+			installMods(&tool, localGameName);
 		}
 
 		tool.shutdown();
@@ -361,9 +363,7 @@ int main(int argc, char** argv)
 
 	// Start the game
 	if (startGame)
-	{
-		std::string localGameName = detectUnrealGame();
-		
+	{		
 		// Get local UE4 game
 		if (localGameName.length())
 		{
