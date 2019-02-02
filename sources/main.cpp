@@ -148,6 +148,9 @@ void uploadMod(Boiler* tool, const std::string& gameName, const std::string& mod
 		plugin["Description"].asString(),
 		modBuildRootDirectory,
 		modPreviewImage);
+
+	// Clean up 
+	std::filesystem::remove_all(modBuildRootDirectory);
 }
 
 void installMod(const std::string& modName, const std::string& sourcePath, const std::string& destinationPath, uint64_t modIdentifier, uint32_t modTimestamp)
